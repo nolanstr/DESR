@@ -5,10 +5,24 @@ from scipy.stats import norm
 
 class LaplaceApproximation:
     def __init__(self, optimizer):
+        """
+        Parameters
+        ----------
+        self : object [Argument]
+        optimizer : [Argument]
+
+        """
         self._optimizer = optimizer
         self._b = 1 / np.sqrt(optimizer._training_data.x.shape[0])
 
     def __call__(self, equation):
+        """
+        Parameters
+        ----------
+        self : object [Argument]
+        equation : [Argument]
+
+        """
         self._optimizer(equation)
         f, df_dx = equation.evaluate_equation_derivative_wrt_x(
             self._optimizer._training_data.x

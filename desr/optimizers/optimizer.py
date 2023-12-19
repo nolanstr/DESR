@@ -3,6 +3,13 @@ import scipy as sp
 
 
 def mean_absolute_error(equation_output, y):
+    """
+    Parameters
+    ----------
+    equation_output : [Argument]
+    y : [Argument]
+
+    """
     return np.mean(np.abs(equation_output - y))
 
 
@@ -11,11 +18,26 @@ METRIC_DICT = {"mae": mean_absolute_error}
 
 class Optimizer:
     def __init__(self, training_data, metric="mae"):
+        """
+        Parameters
+        ----------
+        self : object [Argument]
+        training_data : [Argument]
+        metric :default: 'mae' [Argument]
+
+        """
         self.metric = metric
         self._metric_function = METRIC_DICT[metric]
         self._training_data = training_data
 
     def __call__(self, equation):
+        """
+        Parameters
+        ----------
+        self : object [Argument]
+        equation : [Argument]
+
+        """
         params0 = np.random.normal(loc=0, scale=1, size=equation.number_of_constants)
         res = sp.optimize.minimize(
             lambda x: self._fitness_function(equation, x),
@@ -29,6 +51,14 @@ class Optimizer:
         equation.fitness = fitness
 
     def _fitness_function(self, equation, constants):
+        """
+        Parameters
+        ----------
+        self : object [Argument]
+        equation : [Argument]
+        constants : [Argument]
+
+        """
         equation.set_constants(constants)
         equation_output = equation.evaluate_equation(self._training_data.x)
         return self._metric_function(
