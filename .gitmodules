@@ -1,0 +1,3 @@
+[submodule "desr/GenePy"]
+	path = desr/GenePy
+	url = https://github.com/nolanstr/GenePy.git

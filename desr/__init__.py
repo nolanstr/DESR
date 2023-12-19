@@ -1,3 +1,5 @@
-from .GenePy
-from .training_data import TrainingData
+from .GenePy.genepy import Equation, Generator
+from .optimizers import TrainingData, Optimizer
+from .bayesian_fitness import LaplaceApproximation
+from .differential_evolution import DifferentialEvolution
 
