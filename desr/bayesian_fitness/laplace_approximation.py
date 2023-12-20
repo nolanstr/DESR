@@ -32,11 +32,9 @@ class LaplaceApproximation:
         )
         R = torch.squeeze(self._optimizer._training_data.y - f, dim=0)
         n, p = R.shape[0], equation.constants.shape[0]
-        #var = torch.matmul(R.T, R) / (n - p)
+        # var = torch.matmul(R.T, R) / (n - p)
         std = self._optimizer._training_data.y.std().item()
-        log_likelihood = np.sum(
-            np.log(norm(loc=0, scale=std).pdf(R.detach().numpy()))
-        )
+        log_likelihood = np.sum(np.log(norm(loc=0, scale=std).pdf(R.detach().numpy())))
         normalized_marginal_log_like = (1 - self._b) * log_likelihood + (
             p / 2
         ) * np.log(self._b)

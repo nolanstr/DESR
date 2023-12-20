@@ -17,18 +17,20 @@ METRIC_DICT = {"mae": mean_absolute_error}
 
 
 class Optimizer:
-    def __init__(self, training_data, metric="mae"):
+    def __init__(self, training_data, metric="mae", bounds=[0, 1]):
         """
         Parameters
         ----------
         self : object [Argument]
         training_data : [Argument]
         metric :default: 'mae' [Argument]
+        bounds :default: 0, 1 [Argument]
 
         """
         self.metric = metric
         self._metric_function = METRIC_DICT[metric]
         self._training_data = training_data
+        self._bounds = bounds
 
     def __call__(self, equation):
         """
@@ -38,7 +40,9 @@ class Optimizer:
         equation : [Argument]
 
         """
-        params0 = np.random.normal(loc=0, scale=1, size=equation.number_of_constants)
+        params0 = np.random.uniform(
+            low=self._bounds[0], high=self._bounds[1], size=equation.number_of_constants
+        )
         res = sp.optimize.minimize(
             lambda x: self._fitness_function(equation, x),
             params0,

@@ -1,9 +1,20 @@
 from . import Equation
 import numpy as np
+from tqdm import tqdm
 
 
 class DifferentialEvolution:
     def __init__(self, chains, generator, bayesian_fitness, epsilon=0.05):
+        """
+        Parameters
+        ----------
+        self : object [Argument]
+        chains : [Argument]
+        generator : [Argument]
+        bayesian_fitness : [Argument]
+        epsilon :default: 0.05 [Argument]
+
+        """
         self._chains = chains
         self._generator = generator
         self._bayesian_fitness = bayesian_fitness
@@ -12,37 +23,57 @@ class DifferentialEvolution:
 
         self.states = generator(chains)
         self._evaluate_initial_states()
-        self._accepted_states = [state.copy() for state in self.states]
+        self._accepted_states = []
 
-    def sample(self, iterations=100):
-        print([str(state) for state in self.states])
-        print(np.nanmin([state.fitness for state in self.states])) 
-        for i in range(iterations):
+    def sample(self, iterations=100, return_states=False):
+        """
+        Parameters
+        ----------
+        self : object [Argument]
+        iterations :default: 100 [Argument]
+        return_states :default: False [Argument]
+
+        """
+
+        for i in tqdm(range(iterations), total=iterations):
             for j in range(self._chains):
                 proposed_state = self.generate_proposal_state(j)
-                selected_state = self.select_state(proposed_state, 
-                                                    self.states[j])
+                selected_state = self.select_state(proposed_state, self.states[j])
                 self._accepted_states.append(selected_state.copy())
                 self.states[j] = selected_state
-        print([state.fitness for state in self.states]) 
-        print([str(state) for state in self.states])
-
-        return self.states
+        self._set_unique_states()
+        self._set_unique_accepted_states()
+        if return_states:
+            return self.states
 
     def select_state(self, proposed_state, current_state):
-        
+        """
+        Parameters
+        ----------
+        self : object [Argument]
+        proposed_state : [Argument]
+        current_state : [Argument]
+
+        """
+
         if np.isnan(proposed_state.fitness):
             return current_state
-        ratio = np.exp(-proposed_state.fitness+current_state.fitness)
+        ratio = np.exp(-proposed_state.fitness + current_state.fitness)
         alpha = min(1, ratio)
         if np.random.uniform() <= alpha:
             return proposed_state
         return current_state
 
     def generate_proposal_state(self, state_idx):
+        """
+        Parameters
+        ----------
+        self : object [Argument]
+        state_idx : [Argument]
+
+        """
         sample_idxs = np.random.choice(
-            np.hstack((np.arange(state_idx), 
-            np.arange(state_idx, self._chains))),
+            np.hstack((np.arange(state_idx), np.arange(state_idx, self._chains))),
             2,
             replace=False,
         )
@@ -93,5 +124,77 @@ class DifferentialEvolution:
         return equation
 
     def _evaluate_initial_states(self):
+        """
+        Parameters
+        ----------
+        self : object [Argument]
+
+        """
         for state in self.states:
             state.fitness = self._bayesian_fitness(state)
+
+    def _set_unique_states(self):
+        """
+        Parameters
+        ----------
+        self : object [Argument]
+
+        """
+
+        def check_arrays(array1, array2):
+            """
+            Parameters
+            ----------
+            array1 : [Argument]
+            array2 : [Argument]
+
+            """
+            return np.array_equal(array1, array2)
+
+        unique_states = [self.states[0]]
+        for state in self.states[1:]:
+            if not np.any(
+                [
+                    check_arrays(
+                        state._simplified_genotype, unique_state._simplified_genotype
+                    )
+                    for unique_state in unique_states
+                ]
+            ):
+                unique_states.append(state)
+        fits = [state.fitness for state in unique_states]
+        idxs = np.flip(np.argsort(fits))
+        self.unique_states = [unique_states[i] for i in idxs]
+
+    def _set_unique_accepted_states(self):
+        """
+        Parameters
+        ----------
+        self : object [Argument]
+
+        """
+
+        def check_arrays(array1, array2):
+            """
+            Parameters
+            ----------
+            array1 : [Argument]
+            array2 : [Argument]
+
+            """
+            return np.array_equal(array1, array2)
+
+        unique_accepted_states = [self._accepted_states[0]]
+        for state in self._accepted_states[1:]:
+            if not np.any(
+                [
+                    check_arrays(
+                        state._simplified_genotype, unique_state._simplified_genotype
+                    )
+                    for unique_state in unique_accepted_states
+                ]
+            ):
+                unique_accepted_states.append(state)
+        fits = [state.fitness for state in unique_accepted_states]
+        idxs = np.flip(np.argsort(fits))
+        self.unique_accepted_states = [unique_accepted_states[i] for i in idxs]
